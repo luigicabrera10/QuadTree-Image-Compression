@@ -193,8 +193,8 @@ object Quadtree {
                 else{
                     average = average + getAverage(quads(0), width/2, height/2)
                     average = average + getAverage(quads(1), width/2 + width%2 , height/2)
-                    average = average + getAverage(quads(0), width/2, height/2 + height%2)
-                    average = average + getAverage(quads(1), width/2 + width%2 , height/2 + height%2)
+                    average = average + getAverage(quads(2), width/2, height/2 + height%2)
+                    average = average + getAverage(quads(3), width/2 + width%2 , height/2 + height%2)
 
                     average = average / 4
                     average
