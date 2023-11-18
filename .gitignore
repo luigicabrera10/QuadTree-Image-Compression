@@ -1,4 +1,6 @@
 testing.scala
+
+
 Empty.class
 Empty.tasty
 Empty$.class
@@ -11,11 +13,9 @@ Leaf.class
 Leaf.tasty
 Leaf$.class
 
-
 mainObj.class
 mainObj.tasty
 mainObj$.class
-
 
 Node.class
 Node.tasty
@@ -24,3 +24,7 @@ Node$.class
 Quadtree.class
 Quadtree.tasty
 Quadtree$.class
+
+QuadtreeExample.class
+QuadtreeExample.tasty
+QuadtreeExample$.class
