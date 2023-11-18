@@ -127,22 +127,36 @@ object Quadtree {
 
                 val width  : Int = mat(0).length
                 val height : Int = mat.length
+                val arrQuads = Array.ofDim[Quadtree](4)
 
-                if (width == 1 || height == 1) { // Forzar promedio
-                    
-                    var average : Double = 0.0
+                if (width == 1){
 
-                    for (i <- 0 until mat.length){
-                        for (j <- 0 until mat(0).length) average = average + mat(i)(j)
-                    }
-                    average = average / (mat.length * mat(0).length)
+                    val parte1 = mat.slice(0, mat.length/2);
+                    val parte2 = mat.slice(mat.length/2, mat.length);
 
-                    Leaf(width, height, average)
+                    arrQuads(0) = build(parte1)
+                    arrQuads(1) = build(parte2)
+                    arrQuads(2) = Empty()
+                    arrQuads(3) = Empty()
+
+                    Node(arrQuads)
+
+                }
+                else if (height == 1){
+
+                    var parte1 = Array( mat(0).slice(0, mat(0).length/2) )
+                    var parte2 = Array( mat(0).slice(mat(0).length/2, mat(0).length) )
+
+                    arrQuads(0) = build(parte1)
+                    arrQuads(1) = build(parte2)
+                    arrQuads(2) = Empty()
+                    arrQuads(3) = Empty()
+
+                    Node(arrQuads)
 
                 }
                 else{
 
-                    val arrQuads = Array.ofDim[Quadtree](4)
                     val splitMat = dividirMatrizEnCuatroPartes(mat)
 
                     for (i <- 0 until 4){
@@ -157,17 +171,34 @@ object Quadtree {
         }
     }
 
-    def getAverage(tree: Quadtree) : Double = {
+    def getAverage(tree: Quadtree, width: Int, height: Int) : Double = {
         tree match {
             case Empty() => 0.0
             case Leaf(w, h, value) => value
             case Node(quads) =>
                 var average : Double = 0.0
-                for (i <- 0 until 4) {
-                    average = average + getAverage(quads(i))
+
+                if (width == 1){
+                    average = average + getAverage(quads(0), 1, height/2)
+                    average = average + getAverage(quads(1), 1, height/2 + height%2)
+                    average = average / 2
+                    average
                 }
-                average = average / 4
-                average
+                else if (height == 1){
+                    average = average + getAverage(quads(0), width/2, 1)
+                    average = average + getAverage(quads(1), width/2 + width%2 , 1)
+                    average = average / 2
+                    average
+                }
+                else{
+                    average = average + getAverage(quads(0), width/2, height/2)
+                    average = average + getAverage(quads(1), width/2 + width%2 , height/2)
+                    average = average + getAverage(quads(0), width/2, height/2 + height%2)
+                    average = average + getAverage(quads(1), width/2 + width%2 , height/2 + height%2)
+
+                    average = average / 4
+                    average
+                }
         }
     }
 
@@ -195,7 +226,7 @@ object Quadtree {
 
                 if (actualDeep == maxDeep){ // Forzar Promedio
 
-                    val average = getAverage(tree)
+                    val average = getAverage(tree, width, height)
                     
                     val mat = Array.ofDim[Double](height, width)
                     for (i <- 0 until height) {
@@ -208,18 +239,57 @@ object Quadtree {
 
                 }
                 else{
+                    
+                    if (width == 1){ // Vertical Mat
+                        var queryMat0 = query(quads(0), maxDeep, (width/2), (height/2), actualDeep +1)
+                        var queryMat1 = query(quads(1), maxDeep, (width/2) + width%2, (height/2), actualDeep +1)
 
-                    var queryMat0 = query(quads(0), maxDeep, (width/2), (height/2), actualDeep +1)
-                    var queryMat1 = query(quads(1), maxDeep, (width/2) + width%2, (height/2), actualDeep +1)
-                    var queryMat2 = query(quads(2), maxDeep, (width/2), (height/2) + height%2, actualDeep +1)
-                    var queryMat3 = query(quads(3), maxDeep, (width/2) + width%2, (height/2) + height%2, actualDeep +1)
+                        var finalMat = Array.ofDim[Double](queryMat0.length + queryMat1.length, 1);
+                        
+                        for (i <- 0 until queryMat0.length) finalMat(i)(0) = queryMat0(i)(0)
+                        for (i <- 0 until queryMat1.length) finalMat(queryMat0.length + i)(0) = queryMat1(i)(0)
+                        
+                        finalMat
+                    }
+                    else if (height == 1){ // Horizontal Mat
+                        var queryMat0 = query(quads(0), maxDeep, (width/2), (height/2), actualDeep +1)
+                        var queryMat1 = query(quads(1), maxDeep, (width/2) + width%2, (height/2), actualDeep +1)
 
-                    val finalMat = joinMats(queryMat0, queryMat1, queryMat2, queryMat3)
-                    finalMat
+                        var finalMat = Array.ofDim[Double](1, queryMat0(0).length + queryMat1(0).length);
+                        
+                        for (i <- 0 until queryMat0(0).length) finalMat(0)(i) = queryMat0(0)(i)
+                        for (i <- 0 until queryMat1(0).length) finalMat(0)(queryMat0(0).length + i) = queryMat1(0)(i)
+
+                        finalMat
+                    }
+                    else{
+                        var queryMat0 = query(quads(0), maxDeep, (width/2), (height/2), actualDeep +1)
+                        var queryMat1 = query(quads(1), maxDeep, (width/2) + width%2, (height/2), actualDeep +1)
+                        var queryMat2 = query(quads(2), maxDeep, (width/2), (height/2) + height%2, actualDeep +1)
+                        var queryMat3 = query(quads(3), maxDeep, (width/2) + width%2, (height/2) + height%2, actualDeep +1)
+
+                        val finalMat = joinMats(queryMat0, queryMat1, queryMat2, queryMat3)
+                        finalMat
+                    }
+                    
 
                 }
         }
 
+    }
+
+    def maxDeep(tree: Quadtree, actualDeep: Int = 0) : Int = {
+        tree match{
+            case Empty() => 0
+            case Leaf(w, h, value) => 0
+            case Node(quads) =>
+                var maxDeepResult : Int = 0
+                for (i <- 0 until 4){
+                    maxDeepResult = maxDeepResult.max(maxDeep(quads(i)))
+                }
+                maxDeepResult = maxDeepResult + 1
+                maxDeepResult
+        }
     }
 
     def printQuadTree(tree: Quadtree) : Unit = {
@@ -244,14 +314,16 @@ object QuadtreeExample {
         val imagePath = "images/halloween.png" // Replace with the actual path to your image file
         val grayscaleMatrix = ImageProcessing.convertToGrayscale(imagePath)
 
-        print("\n\n")
+        print("\n")
 
 
         ImageProcessing.matrixToImage(grayscaleMatrix, "images/grayScaleOutput")
 
-        print("\nStart BUILD\n")
+        print("\nSTART BUILD\n")
         var tree: Quadtree = Quadtree.build(grayscaleMatrix)
-        print("\nFINISH BUILD\n")
+        print("FINISH BUILD\n")
+
+        print("Max Deep Query: " + Quadtree.maxDeep(tree) + "\n\n")
 
         // Quadtree.printQuadTree(tree)
         // print("\n\n")
@@ -261,7 +333,7 @@ object QuadtreeExample {
 
         while (deep != -1){
 
-            print("Enter an Deep Quey: ")
+            print("Enter an Deep Query: ")
             deep = scala.io.StdIn.readInt()
 
             if (deep == -1)  break()
